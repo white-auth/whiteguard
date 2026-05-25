@@ -1,22 +1,30 @@
 # whiteguard
 
-A quick, easy and open-source Discord bot for managing users on a whitelist/blacklist. It uses the Luvit/Lua Discord libraries and a simple JSON file for storing whitelisted and blacklisted users.
+A quick, easy and open-source Discord bot for managing users on a whitelist/blacklist. It uses the Luvit/Lua Discord libraries and stores whitelisted and blacklisted users in a GitHub repository via the GitHub API.
 
 ## Quick overview
 
 - `main.lua` — bot entrypoint; starts the Discord client and loads slash command modules via `handler.lua`.
 - `handler.lua` — auto-loads any `.lua` files placed in the `commands/` folder.
-- `commands/` — put command modules here (e.g. `whitelist.lua`, `unwhitelist.lua`).
+- `commands/` — slash command modules (e.g. `whitelist.lua`, `unwhitelist.lua`, `ban.lua`, `kick.lua`, `timeout.lua`).
+- `libraries/` — core libraries:
+  - `git.lua` — GitHub API integration for reading/writing whitelist data.
+  - `dotenv.lua` — environment variable parser for loading `.env` files.
+  - `types.lua` — Discord type constants for slash command options.
+  - `base64.lua` — Base64 encoding/decoding utilities.
 - `EXAMPLEWL.json` — example whitelist/blacklist data schema.
 
 ## Prerequisites
 
 - Luvit (or another runtime that supports `require('discordia')`).
 - `discordia` and `discordia-interactions` libraries installed for your runtime.
+- A GitHub repository to store whitelist/blacklist data (recommended: `white-auth/whitelists`).
+- A GitHub Personal Access Token with `repo` scope to access your whitelist repository.
 
 Install dependencies with your preferred package manager (for example, using `lit`):
 
 ```bash
+lit install creationix/coro-http
 lit install SinisterRectus/discordia
 lit install Bilal2453/discordia-interactions
 ```
@@ -25,29 +33,48 @@ Adjust the above to match the package manager you use.
 
 ## Configuration
 
-1. Provide your bot token. The project now loads environment variables from a `.env` file using `dotenv`.
+### 1. Set up environment variables
 
-Create a file named `.env` in the project root with a line like:
+Create a file named `.env` in the project root with your bot token and GitHub token:
 
 ```env
 DISCORD_TOKEN=your_bot_token_here
+GITHUB_TOKEN=your_github_personal_access_token_here
 ```
 
-`main.lua` will read `process.env.DISCORD_TOKEN` and will error if the variable is missing. If you prefer, you can still hardcode the token in `main.lua` by replacing the `client:run('Bot '..token)` call, but using a `.env` or other secret management is recommended.
+- **DISCORD_TOKEN**: Your Discord bot token (create one at [Discord Developer Portal](https://discord.com/developers/applications)).
+- **GITHUB_TOKEN**: A GitHub Personal Access Token with `repo` scope (create one at [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens)).
 
-2. Create your runtime whitelist file. Copy `EXAMPLEWL.json` to a file your command code expects (for example `whitelist.json`) and edit the JSON to include real Discord user IDs.
+`main.lua` will read `process.env.DISCORD_TOKEN` and will error if the variable is missing. The `libraries/git.lua` module will use `GITHUB_TOKEN` to authenticate with the GitHub API.
 
-HWID must include an actual HWID (obv) that was given from your executor. Make sure it IS encrypted through the SHA256 library, as the bot will encrypt and decrypt the HWID's you give it.
-```json
-{
-	"WhitelistedUsers": {
-		"123456789012345678": { "hwid": "real", "level": 1 }
-	},
-	"BlacklistedUsers": {
-		"123456789012345678": { "hwid": "real", "reason": "Blacklisted :0" }
-	}
+### 2. Configure the GitHub repository
+
+Edit `libraries/git.lua` and update the `config` section:
+
+```lua
+config = {
+    repo = 'owner/repo-name',  -- e.g., 'white-auth/whitelists'
+    file = 'whitelists.json',  -- the JSON file in your repo containing whitelist data
+    branch = 'main'             -- the branch to commit to
 }
 ```
+
+Create a `whitelists.json` file in your GitHub repository with the following structure:
+
+```json
+{
+    "WhitelistedUsers": {
+        "123456789012345678": { "hwid": "sha256_hash_here", "level": 1 }
+    },
+    "BlacklistedUsers": {
+        "123456789012345678": { "hwid": "sha256_hash_here", "reason": "Blacklisted :0" }
+    }
+}
+```
+
+- **hwid**: The SHA256 hash of the user's Hardware ID (the bot will hash HWIDs before storing them).
+- **level**: Whitelisted user's access level (1–3, with higher levels granting more permissions).
+- **reason**: Reason for blacklisting.
 
 ## Adding commands
 
@@ -55,17 +82,47 @@ Create a Lua file under `commands/` that returns a command definition compatible
 
 ```lua
 return {
-    name = 'ping',
-    description = 'Checks to see if the bot is active and alive!',
-    run = function(interaction)
-        interaction:reply({
-            content = 'Pong! 🏓'
-        }, false)
-    end
+	name = 'ping',
+	description = 'Reply with pong',
+	run = function(interaction)
+		interaction:reply({content = 'pong'}, true)
+	end
 }
 ```
 
-For whitelisting behaviour, create commands named `whitelist.lua` and `unwhitelist.lua` that update your JSON store. The project currently ships with empty placeholders in `commands/`.
+For whitelisting and blacklisting, commands like `whitelist.lua`, `unwhitelist.lua`, `blacklist.lua`, and `unblacklist.lua` use the `libraries/git.lua` module to commit changes to your GitHub repository. Example:
+
+```lua
+local discordia = {
+    extra = {
+        git = require('libraries/git'),
+        types = require('libraries/types')
+    }
+}
+
+return {
+    name = 'whitelist',
+    description = 'Whitelist a user',
+    options = {
+        {
+            name = 'user',
+            description = 'The user to whitelist',
+            type = discordia.extra.types.USER,
+            required = true
+        }
+    },
+    run = function(interaction)
+        local targetUser = interaction.data.options[1].value
+        local success = discordia.extra.git:whitelist(targetUser, 1, 'user_hwid_here')
+        
+        if success then
+            interaction:reply({content = 'User whitelisted!'}, true)
+        else
+            interaction:reply({content = 'Failed to whitelist user.'}, true)
+        end
+    end
+}
+```
 
 ## Running the bot
 
@@ -91,6 +148,22 @@ If not installed, install the dependencies required by running this command:
 lit install Bilal2453/discordia-interactions
 ```
 - If slash commands don't register, verify `discordia-slash` is installed and the bot has application command permissions.
+- "No GITHUB_TOKEN found in .env file": ensure your `.env` file contains a valid `GITHUB_TOKEN` and the GitHub token has `repo` scope.
+- "Failed to fetch whitelist from GitHub": verify that:
+  - The `GITHUB_TOKEN` is valid and hasn't expired.
+  - Your GitHub repository exists and the whitelist file path is correct.
+  - The repository is private or the token has appropriate access permissions.
+- "Failed to commit whitelist to GitHub": ensure your token has write access to the repository.
+
+## Next steps & customization ideas
+
+- Implement `ban.lua`, `kick.lua`, and `timeout.lua` for moderation commands.
+- Complete `whitelist.lua`, `unwhitelist.lua`, `blacklist.lua`, and `unblacklist.lua` commands using the `libraries/git.lua` module.
+- Add role-based permission checks to moderation commands (e.g., owner, moderator, admin).
+- Implement timed punishments (ban/kick/timeout with automatic cleanup).
+- Add logging for all whitelist/blacklist changes (optional: to a separate Discord channel or log file).
+- Set up branch protection rules on your GitHub repository to prevent accidental data loss.
+- Add graceful shutdown handling and error recovery.
 
 ## Credits
-@sstvskids - Coding this whole project :)
+@stav -- Releasing the whole bot source code for free
