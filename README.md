@@ -55,11 +55,13 @@ Create a Lua file under `commands/` that returns a command definition compatible
 
 ```lua
 return {
-	name = 'ping',
-	description = 'Reply with pong',
-	run = function(ctx)
-		ctx:reply('pong')
-	end
+    name = 'ping',
+    description = 'Checks to see if the bot is active and alive!',
+    run = function(interaction)
+        interaction:reply({
+            content = 'Pong! 🏓'
+        }, false)
+    end
 }
 ```
 
