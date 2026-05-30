@@ -4,7 +4,7 @@ A quick, easy and open-source Discord bot for managing users on a whitelist/blac
 
 ## Quick overview
 
-- `main.lua` — bot entrypoint; starts the Discord client and loads slash command modules via `handler.lua`.
+- `main.lua` — bot entrypoint; starts the Discord client and loads slash command modules via `bundler.lua`.
 - `handler.lua` — auto-loads any `.lua` files placed in the `commands/` folder.
 - `commands/` — slash command modules (e.g. `whitelist.lua`, `unwhitelist.lua`, `blacklist.lua`, `unblacklist.lua`, `ping.lua`).
 - `libraries/` — core libraries:
