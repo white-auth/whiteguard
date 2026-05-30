@@ -2,7 +2,6 @@
 
     A Git Library to commit whitelist updates to your GitHub repository (whitelist)
 
-
 ]]
 
 local git = {
