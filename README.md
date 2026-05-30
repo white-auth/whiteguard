@@ -29,8 +29,6 @@ Install dependencies with `lit` using the commands below:
 lit install SinisterRectus/discordia
 lit install Bilal2453/discordia-interactions
 lit install creationix/coro-http
-lit install luvit/openssl
-lit install luvit/secure-socket
 ```
 
 `creationix/coro-http` will also install its runtime dependencies (`coro-net`, `coro-channel`, `coro-wrapper`, and `http-codec`) automatically.
