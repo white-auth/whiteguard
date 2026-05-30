@@ -6,7 +6,7 @@ A quick, easy and open-source Discord bot for managing users on a whitelist/blac
 
 - `main.lua` — bot entrypoint; starts the Discord client and loads slash command modules via `handler.lua`.
 - `handler.lua` — auto-loads any `.lua` files placed in the `commands/` folder.
-- `commands/` — slash command modules (e.g. `whitelist.lua`, `unwhitelist.lua`, `ban.lua`, `kick.lua`, `timeout.lua`).
+- `commands/` — slash command modules (e.g. `whitelist.lua`, `unwhitelist.lua`, `blacklist.lua`, `unblacklist.lua`, `ping.lua`).
 - `libraries/` — core libraries:
   - `git.lua` — GitHub API integration for reading/writing whitelist data.
   - `dotenv.lua` — environment variable parser for loading `.env` files.
@@ -67,18 +67,14 @@ Create a `whitelists.json` file in your GitHub repository with the following str
 
 ```json
 {
-    "WhitelistedUsers": {
-        "123456789012345678": { "hwid": "sha256_hash_here", "level": 1 }
-    },
-    "BlacklistedUsers": {
-        "123456789012345678": { "hwid": "sha256_hash_here", "reason": "Blacklisted :0" }
-    }
+    "WhitelistedUsers": {},
+    "BlacklistedUsers": {}
 }
 ```
 
 - **hwid**: The SHA256 hash of the user's Hardware ID (the bot will hash HWIDs before storing them).
-- **level**: Whitelisted user's access level (1–3, with higher levels granting more permissions).
-- **reason**: Reason for blacklisting.
+- **level**: Whitelisted user's access level (2–3, with higher levels granting more permissions). One being default level.
+- **reason**: Reason for whitelisting/blacklisting.
 
 ## Adding commands
 
