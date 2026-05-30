@@ -147,15 +147,5 @@ If everything is configured correctly you should see a login message in the cons
   - The repository is private or the token has appropriate access permissions.
 - "Failed to commit whitelist to GitHub": ensure your token has write access to the repository.
 
-## Next steps & customization ideas
-
-- Implement `ban.lua`, `kick.lua`, and `timeout.lua` for moderation commands.
-- Complete `whitelist.lua`, `unwhitelist.lua`, `blacklist.lua`, and `unblacklist.lua` commands using the `libraries/git.lua` module.
-- Add role-based permission checks to moderation commands (e.g., owner, moderator, admin).
-- Implement timed punishments (ban/kick/timeout with automatic cleanup).
-- Add logging for all whitelist/blacklist changes (optional: to a separate Discord channel or log file).
-- Set up branch protection rules on your GitHub repository to prevent accidental data loss.
-- Add graceful shutdown handling and error recovery.
-
 ## Credits
 @stav -- Releasing the whole bot source code for free
