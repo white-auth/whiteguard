@@ -18,8 +18,6 @@ A quick, easy and open-source Discord bot for managing users on a whitelist/blac
 - A Luvit-compatible runtime installed.
 - `discordia` and `discordia-interactions`.
 - `coro-http` for GitHub API requests.
-- `luvit/openssl` for SHA256 hashing and Base64 support.
-- `luvit/secure-socket` for HTTPS requests to GitHub.
 - A GitHub repository to store whitelist/blacklist data (recommended: `white-auth/whitelists`).
 - A GitHub Personal Access Token with `repo` scope to access your whitelist repository.
 
